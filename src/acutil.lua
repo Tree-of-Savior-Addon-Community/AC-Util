@@ -1,5 +1,6 @@
 local acutil = {};
 local json = require('json');
+local addonSavePath = '../addons/';
 
 _G['ADDONS'] = _G['ADDONS'] or {};
 _G['ADDONS']['EVENTS'] = _G['ADDONS']['EVENTS'] or {};
@@ -278,7 +279,18 @@ end
 -- ================================================================
 
 function acutil.saveJSON(path, tbl)
+	print("acutil.saveJSON has been depreciated, please use acutil.saveJSONX('myaddon/data.json', {somedata}) instead.");
 	file,err = io.open(path, "w")
+	if err then return _,err end
+
+	local s = json.encode(tbl);
+	file:write(s);
+	file:close();
+end
+
+-- Ex: acutil.saveJSONX('myaddon/data.json', {somedata});
+function acutil.saveJSONX(addonPath, tbl)
+	file,err = io.open(addonSavePath..addonPath, "w")
 	if err then return _,err end
 
 	local s = json.encode(tbl);
@@ -289,33 +301,66 @@ end
 -- tblMerge is optional, use this to merge new pairs from tblMerge while
 -- preserving the pairs set in the pre-existing config file
 function acutil.loadJSON(path, tblMerge, ignoreError)
-    -- opening the file
+	print("acutil.loadJSON has been depreciated, please use acutil.loadJSONX('myaddon/data.json') instead.");
+	-- opening the file
 	local file, err=io.open(path,"r");
-    local t = nil;
-    -- if a error happened 
+	local t = nil;
+	-- if a error happened 
 	if (err) then 
-        -- if the ignoreError is true
-        if (ignoreError) then
-            -- we simply set it as a empty json
-            t = {};
-        else 
-            -- if it's not, the error is returned
-            return _,err
-        end
-    else 
-        -- if nothing wrong happened, the file is read
-	    local content = file:read("*all");
-        file:close();
-        t = json.decode(content);
-    end
-    -- if there is another table to merge (like default options)
+		-- if the ignoreError is true
+		if (ignoreError) then
+			-- we simply set it as a empty json
+			t = {};
+		else 
+			-- if it's not, the error is returned
+			return _,err
+		end
+	else 
+		-- if nothing wrong happened, the file is read
+		local content = file:read("*all");
+		file:close();
+		t = json.decode(content);
+	end
+	-- if there is another table to merge (like default options)
 	if tblMerge then
-        -- we merge it
+		-- we merge it
 		t = acutil.mergeLeft(tblMerge, t)
-        -- and save it back to file
+		-- and save it back to file
 		acutil.saveJSON(path, t);
 	end
-    -- returning the table
+	-- returning the table
+	return t;
+end
+
+-- Ex: local data = acutil.loadJSONX('myaddon/data.json');
+function acutil.loadJSONX(addonPath, tblMerge, ignoreError)
+	-- opening the file
+	local file, err=io.open(addonSavePath..addonPath,"r");
+	local t = nil;
+	-- if a error happened 
+	if (err) then 
+		-- if the ignoreError is true
+		if (ignoreError) then
+			-- we simply set it as a empty json
+			t = {};
+		else 
+			-- if it's not, the error is returned
+			return _,err
+		end
+	else 
+		-- if nothing wrong happened, the file is read
+		local content = file:read("*all");
+		file:close();
+		t = json.decode(content);
+	end
+	-- if there is another table to merge (like default options)
+	if tblMerge then
+		-- we merge it
+		t = acutil.mergeLeft(tblMerge, t)
+		-- and save it back to file
+		acutil.saveJSON(path, t);
+	end
+	-- returning the table
 	return t;
 end
 
