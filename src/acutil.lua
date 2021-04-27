@@ -1,6 +1,7 @@
 local acutil = {};
 local json = require('json');
 local addonSavePath = '../addons/';
+local depreciationList = {};
 
 _G['ADDONS'] = _G['ADDONS'] or {};
 _G['ADDONS']['EVENTS'] = _G['ADDONS']['EVENTS'] or {};
@@ -279,13 +280,18 @@ end
 -- ================================================================
 
 function acutil.saveJSON(path, tbl)
-	print("acutil.saveJSON has been depreciated, please use acutil.saveJSONX('myaddon/data.json', {somedata}) instead. Path: "..path);
 	file,err = io.open(path, "w")
 	if err then return _,err end
 
 	local s = json.encode(tbl);
 	file:write(s);
 	file:close();
+	
+	if depreciationList[path] == nil then
+		print("acutil.saveJSON has been depreciated, please use acutil.saveJSONX('myaddon/data.json', {somedata}) instead. Path: "..path);
+		depreciationList[path] = true;
+	end
+	
 end
 
 -- Ex: acutil.saveJSONX('myaddon/data.json', {somedata});
@@ -301,7 +307,6 @@ end
 -- tblMerge is optional, use this to merge new pairs from tblMerge while
 -- preserving the pairs set in the pre-existing config file
 function acutil.loadJSON(path, tblMerge, ignoreError)
-	print("acutil.loadJSON has been depreciated, please use acutil.loadJSONX('myaddon/data.json') instead. Path: "..path);
 	-- opening the file
 	local file, err=io.open(path,"r");
 	local t = nil;
@@ -329,6 +334,10 @@ function acutil.loadJSON(path, tblMerge, ignoreError)
 		acutil.saveJSON(path, t);
 	end
 	-- returning the table
+	if depreciationList[path] == nil then
+		print("acutil.loadJSON has been depreciated, please use acutil.loadJSONX('myaddon/data.json') instead. Path: "..path);
+		depreciationList[path] = true;
+	end
 	return t;
 end
 
