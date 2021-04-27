@@ -370,7 +370,7 @@ function acutil.loadJSONX(addonPath, tblMerge, ignoreError)
 		-- we merge it
 		t = acutil.mergeLeft(tblMerge, t)
 		-- and save it back to file
-		acutil.saveJSON(path, t);
+		acutil.saveJSONX(addonPath, t);
 	end
 	-- returning the table
 	return t;
