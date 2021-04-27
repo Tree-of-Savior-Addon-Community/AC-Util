@@ -279,7 +279,7 @@ end
 -- ================================================================
 
 function acutil.saveJSON(path, tbl)
-	print("acutil.saveJSON has been depreciated, please use acutil.saveJSONX('myaddon/data.json', {somedata}) instead.");
+	print("acutil.saveJSON has been depreciated, please use acutil.saveJSONX('myaddon/data.json', {somedata}) instead. Path: "..path);
 	file,err = io.open(path, "w")
 	if err then return _,err end
 
@@ -301,7 +301,7 @@ end
 -- tblMerge is optional, use this to merge new pairs from tblMerge while
 -- preserving the pairs set in the pre-existing config file
 function acutil.loadJSON(path, tblMerge, ignoreError)
-	print("acutil.loadJSON has been depreciated, please use acutil.loadJSONX('myaddon/data.json') instead.");
+	print("acutil.loadJSON has been depreciated, please use acutil.loadJSONX('myaddon/data.json') instead. Path: "..path);
 	-- opening the file
 	local file, err=io.open(path,"r");
 	local t = nil;
