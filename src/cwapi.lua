@@ -84,15 +84,17 @@ function cwAPI.events.on(event,callback,order)
 
 	_G[event] = function(...)
 		local t = {...};
+		local ret
+
 		if (order == -1) then
 			callback(unpack(t));
 		end
 		if (order ~= 0) then
 			local fn = cwAPI.events.original(event);
-			local ret = fn(unpack(t));
+			ret = fn(unpack(t));
 		end
 		if (order == 0) then			
-			local ret = callback(unpack(t));
+			ret = callback(unpack(t));
 		end
 		if (order == 1) then
 			callback(unpack(t));

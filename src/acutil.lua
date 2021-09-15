@@ -24,6 +24,7 @@ end
 
 function acutil.addThousandsSeparator(amount)
 	local formatted = amount
+    local k
 
 	while true do
 		formatted, k = string.gsub(formatted, "^(-?%d+)(%d%d%d)", '%1,%2')
@@ -279,7 +280,7 @@ end
 -- ================================================================
 
 function acutil.saveJSON(path, tbl)
-	file,err = io.open(path, "w")
+	local file,err = io.open(path, "w")
 	if err then return _,err end
 
 	local s = json.encode(tbl);
@@ -288,7 +289,7 @@ function acutil.saveJSON(path, tbl)
 end
 
 function acutil.saveJSONX(addonPath, tbl)
-	file,err = io.open(addonSavePath..addonPath, "w")
+	local file,err = io.open(addonSavePath..addonPath, "w")
 	if err then return _,err end
 
 	local s = json.encode(tbl);
