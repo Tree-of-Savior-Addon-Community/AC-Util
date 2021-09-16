@@ -47,7 +47,7 @@ function cwAPI.util.tablelength(T)
   	return count
 end
 
-function getvarvalue(var)
+local function getvarvalue(var)
 	if (var == nil) then return 'nil'; end	
 	local tp = type(var); 
 	if (tp == 'string' or tp == 'number') then 
