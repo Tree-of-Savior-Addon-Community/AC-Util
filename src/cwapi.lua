@@ -1,7 +1,6 @@
 -- ======================================================
 --	settings
 -- ======================================================
-
 local cwAPI = {};
 cwAPI.devMode = false;
 
@@ -17,50 +16,44 @@ local JSON = require('json')
 
 cwAPI.util = {};
 
-function cwAPI.util.log(msg) 
-	CHAT_SYSTEM(getvarvalue(msg));  
-end 
+function cwAPI.util.log(msg) CHAT_SYSTEM(getvarvalue(msg)); end
 
-function cwAPI.util.dev(msg,flag) 
-	if (flag) then cwAPI.util.log(msg) end;
-end 
+function cwAPI.util.dev(msg, flag) if (flag) then cwAPI.util.log(msg) end end
 
-function cwAPI.util.splitString(s,type)
-	if (not type) then type = ' '; end
-	local words = {};
-	local m = type;
-	if (type == ' ') then m = "%S+" end;
-	if (type == '.') then m = "%." end;
-	for word in s:gmatch(m) do table.insert(words, word) end
-	return words;
+function cwAPI.util.splitString(s, type)
+    if (not type) then type = ' '; end
+    local words = {};
+    local m = type;
+    if (type == ' ') then m = "%S+" end
+    if (type == '.') then m = "%." end
+    for word in s:gmatch(m) do table.insert(words, word) end
+    return words;
 end
 
-function cwAPI.util.notepad(object,flagInspect,flagMeta)
-	if (flagMeta) then object = getmetatable(object); end
-	if (flagInspect) then object = cwAPI.util.inspect(object); end
-	TestNotePad(object);
+function cwAPI.util.notepad(object, flagInspect, flagMeta)
+    if (flagMeta) then object = getmetatable(object); end
+    if (flagInspect) then object = cwAPI.util.inspect(object); end
+    TestNotePad(object);
 end
 
 function cwAPI.util.tablelength(T)
-  	local count = 0
-  	for _ in pairs(T) do count = count + 1 end
-  	return count
+    local count = 0
+    for _ in pairs(T) do count = count + 1 end
+    return count
 end
 
 local function getvarvalue(var)
-	if (var == nil) then return 'nil'; end	
-	local tp = type(var); 
-	if (tp == 'string' or tp == 'number') then 
-		return var; 
-	end
-	if (tp == 'boolean') then 
-		if (var) then 
-			return 'true';
-		else
-			return 'false';
-		end
-	end
-	return tp;
+    if (var == nil) then return 'nil'; end
+    local tp = type(var);
+    if (tp == 'string' or tp == 'number') then return var; end
+    if (tp == 'boolean') then
+        if (var) then
+            return 'true';
+        else
+            return 'false';
+        end
+    end
+    return tp;
 end
 
 -- ======================================================
@@ -70,103 +63,93 @@ end
 cwAPI.events = {};
 cwAPI.evorig = '_original';
 
-function cwAPI.events.original(event) 
-	return _G[event..cwAPI.evorig];	
-end
+function cwAPI.events.original(event) return _G[event .. cwAPI.evorig]; end
 
-function cwAPI.events.on(event,callback,order) 
-	if _G[event] == nil then 
-		cwAPI.util.dev('Global '..event..' does not exists.',cwAPI.devMode);
-		return;
-	end
+function cwAPI.events.on(event, callback, order)
+    if _G[event] == nil then
+        cwAPI.util.dev('Global ' .. event .. ' does not exists.', cwAPI.devMode);
+        return;
+    end
 
-	cwAPI.events.store(event);
+    cwAPI.events.store(event);
 
-	_G[event] = function(...)
-		local t = {...};
-		local ret
+    _G[event] = function(...)
+        local t = {...};
+        local ret
 
-		if (order == -1) then
-			callback(unpack(t));
-		end
-		if (order ~= 0) then
-			local fn = cwAPI.events.original(event);
-			ret = fn(unpack(t));
-		end
-		if (order == 0) then			
-			ret = callback(unpack(t));
-		end
-		if (order == 1) then
-			callback(unpack(t));
-		end
+        if (order == -1) then callback(unpack(t)); end
+        if (order ~= 0) then
+            local fn = cwAPI.events.original(event);
+            ret = fn(unpack(t));
+        end
+        if (order == 0) then ret = callback(unpack(t)); end
+        if (order == 1) then callback(unpack(t)); end
 
-		return ret;
-	end
+        return ret;
+    end
 
-	cwAPI.util.dev('api.events on '..event,cwAPI.devMode);
+    cwAPI.util.dev('api.events on ' .. event, cwAPI.devMode);
 end
 
 function cwAPI.events.reset(event)
-	if _G[event] == nil then 
-		cwAPI.util.dev('Global '..event..' does not exists.',cwAPI.devMode);
-		return;
-	end
-	local fn = cwAPI.events.original(event);
-	if fn ~= nil then
-		cwAPI.util.dev('Reseting '..event,cwAPI.devMode);
-		_G[event] = fn;
-		_G[event..cwAPI.evorig] = nil;
-	end
+    if _G[event] == nil then
+        cwAPI.util.dev('Global ' .. event .. ' does not exists.', cwAPI.devMode);
+        return;
+    end
+    local fn = cwAPI.events.original(event);
+    if fn ~= nil then
+        cwAPI.util.dev('Reseting ' .. event, cwAPI.devMode);
+        _G[event] = fn;
+        _G[event .. cwAPI.evorig] = nil;
+    end
 end
 
-function cwAPI.events.resetAll() 
-	for key,value in pairs(_G) do
-		if (type(value) == 'function' and not string.match(key,cwAPI.evorig)) then
-			cwAPI.events.reset(key);
-		end
-	end
+function cwAPI.events.resetAll()
+    for key, value in pairs(_G) do
+        if (type(value) == 'function' and not string.match(key, cwAPI.evorig)) then cwAPI.events.reset(key); end
+    end
 end
 
-function cwAPI.events.store(event) 
-	if _G[event] == nil then 
-		cwAPI.util.dev('Global '..event..' does not exists.',cwAPI.devMode);
-		return;
-	end
-	local fn = cwAPI.events.original(event);
-	if fn == nil then
-		cwAPI.util.dev('Storing '..event,cwAPI.devMode);
-		_G[event..cwAPI.evorig] = _G[event];
-	end
+function cwAPI.events.store(event)
+    if _G[event] == nil then
+        cwAPI.util.dev('Global ' .. event .. ' does not exists.', cwAPI.devMode);
+        return;
+    end
+    local fn = cwAPI.events.original(event);
+    if fn == nil then
+        cwAPI.util.dev('Storing ' .. event, cwAPI.devMode);
+        _G[event .. cwAPI.evorig] = _G[event];
+    end
 end
 
-function cwAPI.events.listen(event) 	
-	if _G[event] == nil then 
-		cwAPI.util.log('Global '..event..' does not exists.');
-		return;
-	end
-	cwAPI.events.reset(event);
-	cwAPI.events.store(event);
+function cwAPI.events.listen(event)
+    if _G[event] == nil then
+        cwAPI.util.log('Global ' .. event .. ' does not exists.');
+        return;
+    end
+    cwAPI.events.reset(event);
+    cwAPI.events.store(event);
 
-	_G[event] = function(a,b,c,d,e,f,g)
-		cwAPI.util.log('> '..event);
-		cwAPI.events.printParams(a,b,c,e,d,f,g);
-		local fn = cwAPI.events.original(event);
-		cwAPI.util.log('> fn');
-		local ret = fn(a);
-		cwAPI.util.log('> ret');
-		return ret;
-	end
-	cwAPI.util.log('api.events listening to '..event);
+    _G[event] = function(a, b, c, d, e, f, g)
+        cwAPI.util.log('> ' .. event);
+        cwAPI.events.printParams(a, b, c, e, d, f, g);
+        local fn = cwAPI.events.original(event);
+        cwAPI.util.log('> fn');
+        local ret = fn(a);
+        cwAPI.util.log('> ret');
+        return ret;
+    end
+    cwAPI.util.log('api.events listening to ' .. event);
 end
 
-function cwAPI.events.printParams(a,b,c,e,d,f,g) 	
-	if (a) then cwAPI.util.dev('a) '..getvarvalue(a),cwAPI.devMode); end
-	if (b) then cwAPI.util.dev('b) '..getvarvalue(b),cwAPI.devMode); end
-	if (c) then cwAPI.util.dev('c) '..getvarvalue(c),cwAPI.devMode); end
-	if (d) then cwAPI.util.dev('d) '..getvarvalue(d),cwAPI.devMode); end
-	if (e) then cwAPI.util.dev('e) '..getvarvalue(e),cwAPI.devMode); end
-	if (f) then cwAPI.util.dev('f) '..getvarvalue(f),cwAPI.devMode); end
-	if (g) then cwAPI.util.dev('g) '..getvarvalue(g),cwAPI.devMode); end
+function cwAPI.events.printParams(a, b, c, e, d, f, g)
+    if (a) then cwAPI.util.dev('a) ' .. getvarvalue(a), cwAPI.devMode); end
+    if (b) then cwAPI.util.dev('b) ' .. getvarvalue(b), cwAPI.devMode); end
+    if (c) then cwAPI.util.dev('c) ' .. getvarvalue(c), cwAPI.devMode); end
+    if (d) then cwAPI.util.dev('d) ' .. getvarvalue(d), cwAPI.devMode); end
+    if (e) then cwAPI.util.dev('e) ' .. getvarvalue(e), cwAPI.devMode); end
+    if (f) then cwAPI.util.dev('f) ' .. getvarvalue(f), cwAPI.devMode); end
+    if (g) then cwAPI.util.dev('g) ' .. getvarvalue(g), cwAPI.devMode); end
 end
 
 -- ======================================================
@@ -175,38 +158,32 @@ end
 
 cwAPI.commands = {};
 cwAPI.commands.hooks = {};
-cwAPI.commands.ignoreCommonChatCommands = {"/r","/w","/p","/y","/s","/g"};
+cwAPI.commands.ignoreCommonChatCommands = {"/r", "/w", "/p", "/y", "/s", "/g"};
 
-function cwAPI.commands.register(cmd,callback) 
-	cwAPI.commands.hooks[cmd] = callback;
-end
+function cwAPI.commands.register(cmd, callback) cwAPI.commands.hooks[cmd] = callback; end
 
 function cwAPI.commands.closeChat()
-	local chatFrame = GET_CHATFRAME();
-	local edit = chatFrame:GetChild('mainchat');
+    local chatFrame = GET_CHATFRAME();
+    local edit = chatFrame:GetChild('mainchat');
 
-	chatFrame:ShowWindow(0);
-	edit:ShowWindow(0);
-	
-	ui.CloseFrame("chat_option");
-	ui.CloseFrame("chat_emoticon");
+    chatFrame:ShowWindow(0);
+    edit:ShowWindow(0);
+
+    ui.CloseFrame("chat_option");
+    ui.CloseFrame("chat_emoticon");
 end
 
 function cwAPI.commands.parseMessage(message)
     local words = cwAPI.util.splitString(message);
-    local cmd = table.remove(words,1);
+    local cmd = table.remove(words, 1);
 
-  for i,v in ipairs(cwAPI.commands.ignoreCommonChatCommands) do
-    if (tostring(cmd) == tostring(v)) then
-      break;
-    end
-  end
+    for i, v in ipairs(cwAPI.commands.ignoreCommonChatCommands) do if (tostring(cmd) == tostring(v)) then break end end
 
     local fn = cwAPI.commands.hooks[cmd];
     if (fn ~= nil) then
-    	cwAPI.commands.closeChat();
-        return fn(words); 
-    else        
+        cwAPI.commands.closeChat();
+        return fn(words);
+    else
         fn = cwAPI.events.original('UI_CHAT');
         fn(message);
     end
@@ -220,69 +197,71 @@ local parseMessage = function(message) cwAPI.commands.parseMessage(message); end
 
 cwAPI.json = {};
 
-function cwAPI.json.load(folder,filename,ignoreError)
-	if (not filename) then filename = folder; end
-	local file, error = io.open("../addons/"..folder.."/"..filename..".json", "r");
-	if (error) then
-		if (not ignoreError) then ui.SysMsg("Error opening "..folder.."/"..filename.." to load json: "..error); end
-		return nil;
-	else 
-	    local filestring = file:read("*all");
-	    local object = JSON.decode(filestring);    
-	    io.close(file);
-	    return object;
-	end
+function cwAPI.json.load(folder, filename, ignoreError)
+    if (not filename) then filename = folder; end
+    local file, error = io.open("../addons/" .. folder .. "/" .. filename .. ".json", "r");
+    if (error) then
+        if (not ignoreError) then
+            ui.SysMsg("Error opening " .. folder .. "/" .. filename .. " to load json: " .. error);
+        end
+        return nil;
+    else
+        local filestring = file:read("*all");
+        local object = JSON.decode(filestring);
+        io.close(file);
+        return object;
+    end
 end
 
 function cwAPI.json.quoted(var)
-	local tp = type(var);
-	local quoted = '';
-	if (tp == 'string') then quoted = '"'..var..'"'; end
-	if (tp == 'number') then quoted = var; end
-	if (tp == 'boolean') then
-		quoted = 'false';
-		if (var) then quoted = 'true'; end
-	end
-	return quoted;
+    local tp = type(var);
+    local quoted = '';
+    if (tp == 'string') then quoted = '"' .. var .. '"'; end
+    if (tp == 'number') then quoted = var; end
+    if (tp == 'boolean') then
+        quoted = 'false';
+        if (var) then quoted = 'true'; end
+    end
+    return quoted;
 end
 
-function cwAPI.json.encode(object,tabs) 
-	if (not tabs) then tabs = ''; end
-	local tp = type(object);
-	local json = '';
+function cwAPI.json.encode(object, tabs)
+    if (not tabs) then tabs = ''; end
+    local tp = type(object);
+    local json = '';
 
-	if (tp == 'table') then
-		json = json .. '{\n';
-		local count = 0;
-		local max = cwAPI.util.tablelength(object);
+    if (tp == 'table') then
+        json = json .. '{\n';
+        local count = 0;
+        local max = cwAPI.util.tablelength(object);
 
-		for atr,vlr in pairs(object) do
-			count = count + 1;
-			json = json .. tabs .. '\t' .. cwAPI.json.quoted(atr) .. ': ';
-			json = json .. cwAPI.json.encode(vlr,tabs..'\t');
-			if (count < max) then json = json .. ','; end
-			json = json .. '\n';
-		end
+        for atr, vlr in pairs(object) do
+            count = count + 1;
+            json = json .. tabs .. '\t' .. cwAPI.json.quoted(atr) .. ': ';
+            json = json .. cwAPI.json.encode(vlr, tabs .. '\t');
+            if (count < max) then json = json .. ','; end
+            json = json .. '\n';
+        end
 
-		json = json .. tabs .. '}';
-	else
-		json = cwAPI.json.quoted(object);
-	end
-	return json;
+        json = json .. tabs .. '}';
+    else
+        json = cwAPI.json.quoted(object);
+    end
+    return json;
 end
 
-function cwAPI.json.save(object,folder,filename,simple)
-	if (not filename) then filename = folder; end
-	local file, error = io.open("../addons/"..folder.."/"..filename..".json", "w");
-	if (error) then
-		ui.SysMsg("Error opening "..folder.."/"..filename.." to write json: "..error);
-		return false;
-	else 
-		local filestring = cwAPI.json.encode(object);
-		file:write(filestring);
-	    io.close(file);
-		return filestring;
-	end
+function cwAPI.json.save(object, folder, filename, simple)
+    if (not filename) then filename = folder; end
+    local file, error = io.open("../addons/" .. folder .. "/" .. filename .. ".json", "w");
+    if (error) then
+        ui.SysMsg("Error opening " .. folder .. "/" .. filename .. " to write json: " .. error);
+        return false;
+    else
+        local filestring = cwAPI.json.encode(object);
+        file:write(filestring);
+        io.close(file);
+        return filestring;
+    end
 end
 
 -- ======================================================
@@ -292,63 +271,63 @@ end
 cwAPI.attributes = {};
 
 function cwAPI.attributes.getData(attrID)
-	local topFrame = ui.GetFrame('skilltree');
-	topFrame:SetUserValue("CLICK_ABIL_ACTIVE_TIME",imcTime.GetAppTime()-10);
+    local topFrame = ui.GetFrame('skilltree');
+    topFrame:SetUserValue("CLICK_ABIL_ACTIVE_TIME", imcTime.GetAppTime() - 10);
 
-	-- geting the attribute instance
-	local abil = session.GetAbility(attrID);
-	if (not abil) then return nil; end
+    -- geting the attribute instance
+    local abil = session.GetAbility(attrID);
+    if (not abil) then return nil; end
 
-	-- loading its IES data
-	local abilClass = GetIES(abil:GetObject());
+    -- loading its IES data
+    local abilClass = GetIES(abil:GetObject());
 
-	-- getting its name and ID	
-	local abilName = abilClass.ClassName;
-	local abilID = abilClass.ClassID;
+    -- getting its name and ID	
+    local abilName = abilClass.ClassName;
+    local abilID = abilClass.ClassID;
 
-	-- getting the current state
-	local state = abilClass.ActiveState;
+    -- getting the current state
+    local state = abilClass.ActiveState;
 
-	-- returning it
-	return abilName, abilID, state;
+    -- returning it
+    return abilName, abilID, state;
 end
 
 function cwAPI.attributes.toggleOff(attrID)
-	local abilName, abilID, state = cwAPI.attributes.getData(attrID);
-	cwAPI.util.dev('Disabling ['..abilName..']...',cwAPI.devMode);
+    local abilName, abilID, state = cwAPI.attributes.getData(attrID);
+    cwAPI.util.dev('Disabling [' .. abilName .. ']...', cwAPI.devMode);
 
-	-- if the attribute is already disabled, there's nothing to do
-	if (state == 0) then
-		cwAPI.util.dev('The attribute is already disabled.',cwAPI.devMode);
-		return; 
-	end 
+    -- if the attribute is already disabled, there's nothing to do
+    if (state == 0) then
+        cwAPI.util.dev('The attribute is already disabled.', cwAPI.devMode);
+        return;
+    end
 
-	local topFrame = ui.GetFrame('skilltree');
-	topFrame:SetUserValue("CLICK_ABIL_ACTIVE_TIME",imcTime.GetAppTime()-10);
+    local topFrame = ui.GetFrame('skilltree');
+    topFrame:SetUserValue("CLICK_ABIL_ACTIVE_TIME", imcTime.GetAppTime() - 10);
 
-	-- calling the toggle function
-	local fn = _G['TOGGLE_ABILITY_ACTIVE'];
-	fn(nil, nil, abilName, abilID);
-	cwAPI.util.dev('Attibute disabled.',cwAPI.devMode);
+    -- calling the toggle function
+    local fn = _G['TOGGLE_ABILITY_ACTIVE'];
+    fn(nil, nil, abilName, abilID);
+    cwAPI.util.dev('Attibute disabled.', cwAPI.devMode);
 end
 
 function cwAPI.attributes.toggleOn(attrID)
-	local abilName, abilID, state = cwAPI.attributes.getData(attrID);
-	cwAPI.util.dev('Enabling ['..abilName..']...',cwAPI.devMode);
+    local abilName, abilID, state = cwAPI.attributes.getData(attrID);
+    cwAPI.util.dev('Enabling [' .. abilName .. ']...', cwAPI.devMode);
 
-	-- if the attribute is already disabled, there's nothing to do
-	if (state == 1) then
-		cwAPI.util.dev('The attribute is already enabled.',cwAPI.devMode);
-		return; 
-	end 
+    -- if the attribute is already disabled, there's nothing to do
+    if (state == 1) then
+        cwAPI.util.dev('The attribute is already enabled.', cwAPI.devMode);
+        return;
+    end
 
-	local topFrame = ui.GetFrame('skilltree');
-	topFrame:SetUserValue("CLICK_ABIL_ACTIVE_TIME",imcTime.GetAppTime()-10);
+    local topFrame = ui.GetFrame('skilltree');
+    topFrame:SetUserValue("CLICK_ABIL_ACTIVE_TIME", imcTime.GetAppTime() - 10);
 
-	-- calling the toggle function
-	local fn = _G['TOGGLE_ABILITY_ACTIVE'];
-	fn(nil, nil, abilName, abilID);
-	cwAPI.util.dev('Attibute enabled.',cwAPI.devMode);
+    -- calling the toggle function
+    local fn = _G['TOGGLE_ABILITY_ACTIVE'];
+    fn(nil, nil, abilName, abilID);
+    cwAPI.util.dev('Attibute enabled.', cwAPI.devMode);
 end
 
 -- ======================================================
@@ -356,33 +335,31 @@ end
 -- ======================================================
 
 local function runScript(words)
-	local funcStr = '';
-	for key,value in pairs(words) do
-		funcStr = funcStr .. value .. ' '; 
-	end
-	loadstring(funcStr)();
+    local funcStr = '';
+    for key, value in pairs(words) do funcStr = funcStr .. value .. ' '; end
+    loadstring(funcStr)();
 end
 
 local function reloadAddons()
-	ui.SysMsg('=====================================');
-	addonloader.run();
+    ui.SysMsg('=====================================');
+    addonloader.run();
 end
 
-local function showAddonsButton() 
-	local addonLoaderFrame = ui.GetFrame("addonloader");
-	addonLoaderFrame:ShowWindow(1);
-end 
+local function showAddonsButton()
+    local addonLoaderFrame = ui.GetFrame("addonloader");
+    addonLoaderFrame:ShowWindow(1);
+end
 
 -- ======================================================
 --	commands
 -- ======================================================
 
 local function checkCommand(words)
-	cwAPI.util.log('====== cwAPI =====');
-	cwAPI.util.log('"/addons" will show the addons button.');
-	cwAPI.util.log('"/reload" will reload all addons.');
-	cwAPI.util.log('"/script" will let you run lua commands like a bash.');
-	cwAPI.util.log('--------------------------');
+    cwAPI.util.log('====== cwAPI =====');
+    cwAPI.util.log('"/addons" will show the addons button.');
+    cwAPI.util.log('"/reload" will reload all addons.');
+    cwAPI.util.log('"/script" will let you run lua commands like a bash.');
+    cwAPI.util.log('--------------------------');
 end
 
 -- ======================================================
@@ -390,8 +367,8 @@ end
 -- ======================================================
 
 cwAPI.events.resetAll();
-cwAPI.events.on('UI_CHAT',parseMessage,0);
-cwAPI.commands.register('/addons',showAddonsButton);
-cwAPI.commands.register('/reload',reloadAddons);
+cwAPI.events.on('UI_CHAT', parseMessage, 0);
+cwAPI.commands.register('/addons', showAddonsButton);
+cwAPI.commands.register('/reload', reloadAddons);
 
 return cwAPI;
